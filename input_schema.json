@@ -3,19 +3,12 @@
   "type": "object",
   "schemaVersion": 1,
   "properties": {
-    "productId": {
-      "title": "Product ID",
-      "type": "string",
-      "description": "Required. AliExpress product ID from the item URL: .../item/XXXXXXXX.html → enter the number (e.g. 1005005678912345).",
-      "editor": "textfield"
-    },
-    "countries": {
-      "title": "Destination countries (region list)",
+    "entries": {
+      "title": "Per-country product URLs",
       "type": "array",
-      "description": "Required. Country codes to check shipping to, one per line (e.g. AU, DE, UK, US).",
-      "editor": "stringList",
-      "placeholderValue": "AU"
+      "description": "One entry per country. Each entry: country code (AU, US, UK, DE, etc.) and the full AliExpress product page URL to check.",
+      "editor": "json"
     }
   },
-  "required": ["productId", "countries"]
+  "required": ["entries"]
 }

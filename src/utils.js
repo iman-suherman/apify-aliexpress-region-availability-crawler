@@ -45,9 +45,22 @@ function getProxyCountryCode(countryCode) {
  */
 const DEFAULT_COUNTRIES = ['AU', 'DE', 'UK', 'US'];
 
+/**
+ * Extract AliExpress product ID from a product page URL.
+ * @param {string} url - e.g. https://www.aliexpress.com/item/3256808405617250.html
+ * @returns {string|null} - e.g. "3256808405617250" or null
+ */
+function extractProductIdFromUrl(url) {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  const m = trimmed.match(/\/item\/(\d+)(?:\.html?)?/i);
+  return m ? m[1] : null;
+}
+
 module.exports = {
   randomBetween,
   randomDelay,
   getProxyCountryCode,
   DEFAULT_COUNTRIES,
+  extractProductIdFromUrl,
 };

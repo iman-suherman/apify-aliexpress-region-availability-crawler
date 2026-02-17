@@ -1,39 +1,46 @@
 const { Actor, log } = require('apify');
 const { checkCountryForProduct } = require('./countryCheck');
-const { DEFAULT_COUNTRIES } = require('./utils');
+const { extractProductIdFromUrl } = require('./utils');
 
 async function main() {
   await Actor.init();
 
   const input = await Actor.getInput();
-  const productId = (input && input.productId) ? String(input.productId).trim() : null;
-  const rawCountries = input?.countries;
-  const countries = Array.isArray(rawCountries) && rawCountries.length > 0
-    ? rawCountries.map((c) => String(c).toUpperCase())
-    : DEFAULT_COUNTRIES;
-
-  if (!productId) {
-    await Actor.fail('Input required: provide Product ID (AliExpress item ID from the product URL).');
-    return;
-  }
-  if (!Array.isArray(rawCountries) || rawCountries.length === 0) {
-    await Actor.fail('Input required: provide Destination countries (region list), e.g. AU, DE, UK, US.');
+  const rawEntries = input?.entries;
+  if (!Array.isArray(rawEntries) || rawEntries.length === 0) {
+    await Actor.fail('Input required: provide "entries" — array of { "country": "AU", "url": "https://www.aliexpress.com/item/XXXX.html" } (one country, one product URL per entry).');
     return;
   }
 
-  log.info(`Checking region availability for product ${productId} in: ${countries.join(', ')} (sequential)`);
+  const entries = [];
+  for (let i = 0; i < rawEntries.length; i++) {
+    const e = rawEntries[i];
+    const country = e?.country ? String(e.country).toUpperCase().trim() : '';
+    const url = e?.url ? String(e.url).trim() : '';
+    const productId = extractProductIdFromUrl(url);
+    if (!country || !url) {
+      await Actor.fail(`Entry ${i + 1}: "country" and "url" are required.`);
+      return;
+    }
+    if (!productId) {
+      await Actor.fail(`Entry ${i + 1}: "url" must be an AliExpress product page (e.g. https://www.aliexpress.com/item/1234567890.html).`);
+      return;
+    }
+    entries.push({ country, url, productId });
+  }
 
-  // Sequential per-country checks so one browser at a time — avoids timeouts under memory limit
+  log.info(`Checking ${entries.length} country/URL pair(s) (sequential): ${entries.map((e) => `${e.country}: ${e.url}`).join(' | ')}`);
+
   const regionResults = [];
-  for (const countryCode of countries) {
-    const result = await checkCountryForProduct(productId, countryCode);
-    regionResults.push(result);
-    log.info(`${countryCode}: ${result.error || (result.available === true ? 'available' : 'unavailable')}`);
+  for (const { country, url, productId } of entries) {
+    const result = await checkCountryForProduct(productId, country);
+    regionResults.push({ ...result, productId, url });
+    log.info(`${country}: ${result.error || (result.available === true ? 'available' : 'unavailable')}`);
   }
 
   const regions = {};
   for (const r of regionResults) {
-    const entry = {};
+    const entry = { productId: r.productId, url: r.url };
     if (r.available !== undefined && r.available !== null) {
       entry.available = r.available;
     } else {
@@ -47,7 +54,6 @@ async function main() {
   }
 
   const output = {
-    productId,
     checkedAt: new Date().toISOString(),
     regions,
   };

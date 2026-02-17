@@ -52,12 +52,13 @@ async function runCountryCheck({ productId, countryCode }) {
         headless: true,
       },
     },
-    async requestHandler({ page, proxyInfo }) {
+    async requestHandler({ page, proxyInfo, request }) {
       if (!proxyInfo || !proxyInfo.url) {
         handlerResult = { countryCode, available: null, error: 'proxy_not_used' };
         return;
       }
-      log.info(`Crawling ${countryCode} via proxy (country: ${proxyInfo.countryCode || 'n/a'})`);
+      const detailUrl = request?.url || url;
+      log.info(`Crawling ${countryCode} via proxy (country: ${proxyInfo.countryCode || 'n/a'}) | ${detailUrl}`);
       await randomDelay(1500, 3500);
 
       await dismissCookieConsent(page);

@@ -4,25 +4,27 @@ Apify actor that checks **AliExpress product shipping availability** across mult
 
 ## What it does
 
-- **Input:** `productId` (+ optional `countries` list)
-- **Flow:** Builds country-specific AliExpress product URLs, runs a **Playwright** crawler per country with **Apify Proxy** (residential, country-routed), simulates shipping destination context, and extracts shipping availability.
-- **Output:** Normalized JSON with `regions[country]`: `available`, `estimatedDeliveryDays`, `shippingMethodsCount`, or `error`/`reason` on failure.
+- **Input:** Per-country entries: each entry has a **country** code and the full **product page URL** (one country, one URL per entry).
+- **Flow:** For each entry, runs a **Playwright** crawler with **Apify Proxy** (residential, country-routed), then extracts shipping availability. Logs include the detail URL for each crawl.
+- **Output:** Normalized JSON with `regions[country]`: `productId`, `url`, `available`, `estimatedDeliveryDays`, `shippingMethodsCount`, or `error`/`reason` on failure.
 
 This gives you **independent verification** of region availability outside Open API rate limits and supplier metadata.
 
 ## Input
 
-| Field       | Type     | Required | Default              | Description |
-|------------|----------|----------|----------------------|-------------|
-| `productId`| string   | Yes      | -                    | AliExpress product ID (e.g. from `.../item/1005005678912345.html`) |
-| `countries`| string[] | No       | `["AU","DE","UK","US"]` | ISO 3166-1 alpha-2 codes to check |
+| Field     | Type  | Required | Description |
+|-----------|-------|----------|-------------|
+| `entries` | array | Yes      | List of `{ "country": "AU", "url": "https://www.aliexpress.com/item/XXXX.html" }`. One country, one product URL per entry. |
 
-Example:
+Example (same product for multiple countries):
 
 ```json
 {
-  "productId": "1005005678912345",
-  "countries": ["AU", "DE", "UK", "US"]
+  "entries": [
+    { "country": "AU", "url": "https://www.aliexpress.com/item/3256808405617250.html" },
+    { "country": "US", "url": "https://www.aliexpress.com/item/3256808405617250.html" },
+    { "country": "DE", "url": "https://www.aliexpress.com/item/3256808405617250.html" }
+  ]
 }
 ```
 
@@ -30,29 +32,26 @@ Example:
 
 ```json
 {
-  "productId": "1005005678912345",
   "checkedAt": "2026-02-17T08:22:12Z",
   "regions": {
     "AU": {
+      "productId": "3256808405617250",
+      "url": "https://www.aliexpress.com/item/3256808405617250.html",
       "available": true,
       "estimatedDeliveryDays": "10-18",
       "shippingMethodsCount": 3
     },
     "DE": {
+      "productId": "3256808405617250",
+      "url": "https://www.aliexpress.com/item/3256808405617250.html",
       "available": false,
       "reason": "No shipping option"
-    },
-    "UK": {
-      "available": true
-    },
-    "US": {
-      "available": null,
-      "error": "captcha_detected"
     }
   }
 }
 ```
 
+- Each region includes `productId` and `url` that were checked.
 - `available`: `true` / `false` / `null` (unknown or error).
 - `estimatedDeliveryDays`, `shippingMethodsCount`: set when available.
 - `reason`: short explanation when not available.
