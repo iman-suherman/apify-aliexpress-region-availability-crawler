@@ -25,8 +25,8 @@ const SELECTORS = {
     "does not ship",
     "unavailable in your",
   ],
-  // Product title – ensures page loaded
-  productTitle: 'h1[data-pl="product-title"], [class*="ProductTitle"]',
+  // Product title – ensures page loaded (AliExpress varies by locale/A-B)
+  productTitle: 'h1[data-pl="product-title"], [class*="ProductTitle"], [class*="product-title"], h1',
 };
 
 /**
@@ -59,14 +59,31 @@ async function dismissCookieConsent(page, timeoutMs = 3000) {
 
 /**
  * Wait for product title to be visible (page loaded).
+ * Tries multiple selectors; falls back to waiting for body to have content.
  * @param {import('playwright').Page} page
  * @param {number} timeoutMs
  * @returns {Promise<boolean>}
  */
-async function waitForProductTitle(page, timeoutMs = 30000) {
+async function waitForProductTitle(page, timeoutMs = 45000) {
+  const selectors = [
+    'h1[data-pl="product-title"]',
+    '[class*="ProductTitle"]',
+    '[class*="product-title"]',
+    'h1',
+  ];
+  for (const sel of selectors) {
+    try {
+      await page.waitForSelector(sel, { timeout: Math.min(15000, timeoutMs) });
+      return true;
+    } catch {
+      continue;
+    }
+  }
   try {
-    await page.waitForSelector(SELECTORS.productTitle, { timeout: timeoutMs });
-    return true;
+    await page.waitForLoadState('domcontentloaded', { timeout: 5000 }).catch(() => {});
+    await new Promise((r) => setTimeout(r, 3000));
+    const hasContent = await page.evaluate(() => (document.body?.innerText ?? '').length > 200);
+    return !!hasContent;
   } catch {
     return false;
   }

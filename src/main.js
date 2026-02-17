@@ -34,8 +34,18 @@ async function main() {
   const regionResults = [];
   for (const { country, url, productId } of entries) {
     const result = await checkCountryForProduct(productId, country);
-    regionResults.push({ ...result, productId, url });
-    log.info(`${country}: ${result.error || (result.available === true ? 'available' : 'unavailable')}`);
+    const withMeta = { ...result, productId, url };
+    regionResults.push(withMeta);
+    const parts = [];
+    if (result.error) parts.push(`error: ${result.error}`);
+    else {
+      parts.push(`available: ${result.available}`);
+      if (result.estimatedDeliveryDays) parts.push(`delivery: ${result.estimatedDeliveryDays}`);
+      if (result.shippingMethodsCount != null) parts.push(`methods: ${result.shippingMethodsCount}`);
+      if (result.reason) parts.push(`reason: ${result.reason}`);
+    }
+    log.info(`Crawl result ${country}: ${parts.join(', ')}`);
+    log.info(`Crawl result ${country} (full): ${JSON.stringify(withMeta)}`);
   }
 
   const regions = {};

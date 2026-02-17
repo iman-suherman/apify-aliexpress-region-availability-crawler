@@ -45,7 +45,7 @@ async function runCountryCheck({ productId, countryCode }) {
   const crawler = new PlaywrightCrawler({
     proxyConfiguration,
     maxRequestsPerCrawl: 1,
-    requestHandlerTimeoutSecs: 180,
+    requestHandlerTimeoutSecs: 300,
     launchContext: {
       launchOptions: {
         args: ['--disable-web-security', '--no-sandbox'],
@@ -64,21 +64,35 @@ async function runCountryCheck({ productId, countryCode }) {
       await dismissCookieConsent(page);
 
       const titleLoaded = await waitForProductTitle(page);
-      if (!titleLoaded) {
-        const bodyText = await page.evaluate(() => document.body?.innerText ?? '').catch(() => '');
-        const is404 = bodyText.includes('404') || bodyText.includes('Page Not Found');
-        const isCaptcha = bodyText.includes('captcha') || bodyText.includes('CAPTCHA') || page.url().includes('captcha');
-        handlerResult = {
-          countryCode,
-          available: null,
-          error: is404 ? 'product_not_found' : isCaptcha ? 'captcha_detected' : 'page_load_failed',
-        };
+      const bodyText = await page.evaluate(() => document.body?.innerText ?? '').catch(() => '');
+      const is404 = bodyText.includes('404') || bodyText.includes('Page Not Found');
+      const isCaptcha = bodyText.includes('captcha') || bodyText.includes('CAPTCHA') || page.url().includes('captcha');
+      if (is404) {
+        handlerResult = { countryCode, available: null, error: 'product_not_found' };
         return;
+      }
+      if (isCaptcha) {
+        handlerResult = { countryCode, available: null, error: 'captcha_detected' };
+        return;
+      }
+      if (!titleLoaded) {
+        await new Promise((r) => setTimeout(r, 2000));
       }
 
       await randomDelay(800, 2000);
 
       const extracted = await extractShippingAvailability(page);
+      if (!titleLoaded && extracted.available === null && !extracted.reason) {
+        handlerResult = {
+          countryCode,
+          available: extracted.available,
+          estimatedDeliveryDays: extracted.estimatedDeliveryDays,
+          shippingMethodsCount: extracted.shippingMethodsCount,
+          reason: extracted.reason,
+          error: 'page_load_failed',
+        };
+        return;
+      }
       handlerResult = {
         countryCode,
         available: extracted.available,
@@ -92,7 +106,7 @@ async function runCountryCheck({ productId, countryCode }) {
 
   return new Promise((resolve) => {
     const fallback = { countryCode, available: null, error: 'crawl_timeout' };
-    const timeoutMs = 190000;
+    const timeoutMs = 310000;
     const timeout = setTimeout(() => resolve(handlerResult || fallback), timeoutMs);
 
     crawler.run([url])
