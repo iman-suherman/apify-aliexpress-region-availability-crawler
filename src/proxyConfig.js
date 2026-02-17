@@ -1,4 +1,4 @@
-const { Actor } = require('apify');
+const { Actor, log } = require('apify');
 const { getProxyCountryCode } = require('./utils');
 
 /**
@@ -16,7 +16,7 @@ async function createProxyForCountry(countryCode) {
     });
     return proxyConfiguration;
   } catch (err) {
-    Actor.log.warning(`Proxy config failed for ${countryCode} (${proxyCountry}): ${err.message}`);
+    log.warning(`Proxy config failed for ${countryCode} (${proxyCountry}): ${err.message}`);
     return null;
   }
 }

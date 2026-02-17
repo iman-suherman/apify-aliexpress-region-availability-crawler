@@ -1,4 +1,4 @@
-const { Actor } = require('apify');
+const { Actor, log } = require('apify');
 const { checkCountryForProduct } = require('./countryCheck');
 const { DEFAULT_COUNTRIES } = require('./utils');
 
@@ -16,7 +16,7 @@ async function main() {
     return;
   }
 
-  Actor.log.info(`Checking region availability for product ${productId} in: ${countries.join(', ')}`);
+  log.info(`Checking region availability for product ${productId} in: ${countries.join(', ')}`);
 
   // Parallel per-country checks (separate crawl session per country)
   const regionResults = await Promise.all(
@@ -45,7 +45,7 @@ async function main() {
   };
 
   await Actor.pushData(output);
-  Actor.log.info('Region availability result:', JSON.stringify(output, null, 2));
+  log.info('Region availability result:', JSON.stringify(output, null, 2));
   await Actor.exit();
 }
 

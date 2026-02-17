@@ -1,4 +1,4 @@
-const { Actor } = require('apify');
+const { Actor, log } = require('apify');
 const { PlaywrightCrawler } = require('crawlee');
 const { createProxyForCountry } = require('./proxyConfig');
 const {
@@ -87,7 +87,7 @@ async function runCountryCheck({ productId, countryCode }) {
       })
       .catch((err) => {
         clearTimeout(timeout);
-        Actor.log.warning(`Country check failed for ${countryCode}: ${err.message}`);
+        log.warning(`Country check failed for ${countryCode}: ${err.message}`);
         resolve({
           countryCode,
           available: null,
