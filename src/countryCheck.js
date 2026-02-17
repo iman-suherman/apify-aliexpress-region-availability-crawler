@@ -31,11 +31,19 @@ async function runCountryCheck({ productId, countryCode }) {
   const url = buildProductUrl(productId);
   const proxyConfiguration = await createProxyForCountry(countryCode);
 
+  if (!proxyConfiguration) {
+    return {
+      countryCode,
+      available: null,
+      error: 'proxy_unavailable',
+    };
+  }
+
   /** Result from requestHandler; one crawl per country so single value is enough. */
   let handlerResult = null;
 
   const crawler = new PlaywrightCrawler({
-    proxyConfiguration: proxyConfiguration || undefined,
+    proxyConfiguration,
     maxRequestsPerCrawl: 1,
     requestHandlerTimeoutSecs: 180,
     launchContext: {
@@ -44,7 +52,12 @@ async function runCountryCheck({ productId, countryCode }) {
         headless: true,
       },
     },
-    async requestHandler({ page }) {
+    async requestHandler({ page, proxyInfo }) {
+      if (!proxyInfo || !proxyInfo.url) {
+        handlerResult = { countryCode, available: null, error: 'proxy_not_used' };
+        return;
+      }
+      log.info(`Crawling ${countryCode} via proxy (country: ${proxyInfo.countryCode || 'n/a'})`);
       await randomDelay(1500, 3500);
 
       await dismissCookieConsent(page);
