@@ -82,31 +82,6 @@ Input: productId (+ countries)
 | Proxy     | Apify Residential  |
 | Deployment| Apify Platform     |
 
-## Repo structure
-
-```
-apify-aliexpress-region-availability-crawler/
-├── src/
-│   ├── main.js           # Entry; input, parallel country checks, output
-│   ├── countryCheck.js   # One crawler run per country
-│   ├── shippingExtractor.js  # DOM + text-based shipping detection
-│   ├── proxyConfig.js    # Apify proxy per country
-│   └── utils.js          # randomDelay, country code mapping
-├── input_schema.json
-├── package.json
-├── README.md
-└── Dockerfile
-```
-
-## Run locally
-
-```bash
-npm install
-npm start
-```
-
-Set input via Apify CLI or `INPUT.json` when running as an actor. For Apify Platform, deploy the actor and run with input (and optionally webhook) from your ingestion pipeline.
-
 ## Integration with HugeShop region pipeline
 
 - **Trigger:** Ingestion service calls Apify actor (REST or client) with `productId` (and optional `countries`).
