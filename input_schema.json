@@ -6,7 +6,7 @@
     "entries": {
       "title": "Per-country product URLs",
       "type": "array",
-      "description": "One entry per country. Each entry: country code (AU, US, UK, DE, etc.) and the full AliExpress product page URL to check.",
+      "description": "Array of { \"country\": \"AU\"|\"US\"|\"UK\"|\"DE\"|..., \"url\": \"https://www.aliexpress.com/item/XXXX.html\" }. One country, one URL per entry; URLs can use www or country subdomains (e.g. de.aliexpress.com).",
       "editor": "json"
     }
   },

@@ -12,18 +12,44 @@ This gives you **independent verification** of region availability outside Open 
 
 ## Input
 
-| Field     | Type  | Required | Description |
-|-----------|-------|----------|-------------|
-| `entries` | array | Yes      | List of `{ "country": "AU", "url": "https://www.aliexpress.com/item/XXXX.html" }`. One country, one product URL per entry. |
+Provide an **`entries`** array. Each entry is one country and one product URL to check (one country, one URL per entry).
 
-Example (same product for multiple countries):
+| Field      | Type  | Required | Description |
+|------------|-------|----------|-------------|
+| `entries`  | array | Yes      | List of objects. Each object must have `country` and `url`. |
+
+**Each entry object:**
+
+| Property   | Type   | Required | Description |
+|------------|--------|----------|-------------|
+| `country`  | string | Yes      | ISO 3166-1 alpha-2 country code (e.g. `AU`, `US`, `UK`, `DE`, `GB`). |
+| `url`      | string | Yes      | Full AliExpress product page URL (`www.aliexpress.com` or country subdomain e.g. `de.aliexpress.com`). Must contain `/item/<id>.html`. |
+
+- Use the **same URL** in multiple entries to check the same product in different countries.
+- Use **different URLs** to check different products per country.
+- In the Apify Console, use the **Input** tab and paste JSON into the `entries` field (editor is `json`).
+
+**Example input:**
 
 ```json
 {
   "entries": [
-    { "country": "AU", "url": "https://www.aliexpress.com/item/3256808405617250.html" },
-    { "country": "US", "url": "https://www.aliexpress.com/item/3256808405617250.html" },
-    { "country": "DE", "url": "https://www.aliexpress.com/item/3256808405617250.html" }
+    {
+      "country": "AU",
+      "url": "https://www.aliexpress.com/item/1005008591932002.html"
+    },
+    {
+      "country": "US",
+      "url": "https://www.aliexpress.com/item/3256808405617250.html"
+    },
+    {
+      "country": "DE",
+      "url": "https://de.aliexpress.com/item/1005008591932002.html"
+    },
+    {
+      "country": "UK",
+      "url": "https://www.aliexpress.com/item/1005008591932002.html"
+    }
   ]
 }
 ```
@@ -60,15 +86,15 @@ Example (same product for multiple countries):
 ## Architecture (high level)
 
 ```
-Input: productId (+ countries)
-    → Build country-specific AliExpress URL
-    → Launch Playwright crawler per country (parallel)
-    → Apify Proxy (RESIDENTIAL, country code: AU/DE/GB/US)
+Input: entries[] (each: country + product URL)
+    → Extract product ID from URL per entry
+    → For each entry: launch Playwright crawler (sequential)
+    → Apify Proxy (RESIDENTIAL, country code from entry)
     → Simulate shipping destination, extract availability
-    → Normalize → structured JSON
+    → Normalize → structured JSON (regions with productId, url, available, …)
 ```
 
-- **One crawl session per country** to avoid state bleed and improve reliability.
+- **One crawl per entry** (sequential) to avoid timeouts; logs include the detail URL for each crawl.
 - **Proxy:** Apify Proxy with `countryCode` (UK → GB) so each run sees the storefront as in that region.
 
 ## Tech stack
@@ -83,7 +109,7 @@ Input: productId (+ countries)
 
 ## Integration with HugeShop region pipeline
 
-- **Trigger:** Ingestion service calls Apify actor (REST or client) with `productId` (and optional `countries`).
+- **Trigger:** Ingestion service calls Apify actor (REST or client) with `entries` (array of `{ country, url }`).
 - **Completion:** Use webhook or poll default dataset for the run result.
 - **Storage:** Update Firestore (or your store) with:
   - `regionAvailability` (from `regions`)
