@@ -37,7 +37,7 @@ async function runCountryCheck({ productId, countryCode }) {
   const crawler = new PlaywrightCrawler({
     proxyConfiguration: proxyConfiguration || undefined,
     maxRequestsPerCrawl: 1,
-    requestHandlerTimeoutSecs: 90,
+    requestHandlerTimeoutSecs: 180,
     launchContext: {
       launchOptions: {
         args: ['--disable-web-security', '--no-sandbox'],
@@ -78,7 +78,8 @@ async function runCountryCheck({ productId, countryCode }) {
 
   return new Promise((resolve) => {
     const fallback = { countryCode, available: null, error: 'crawl_timeout' };
-    const timeout = setTimeout(() => resolve(handlerResult || fallback), 85000);
+    const timeoutMs = 190000;
+    const timeout = setTimeout(() => resolve(handlerResult || fallback), timeoutMs);
 
     crawler.run([url])
       .then(() => {

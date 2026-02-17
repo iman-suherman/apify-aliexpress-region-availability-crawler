@@ -63,7 +63,7 @@ async function dismissCookieConsent(page, timeoutMs = 3000) {
  * @param {number} timeoutMs
  * @returns {Promise<boolean>}
  */
-async function waitForProductTitle(page, timeoutMs = 15000) {
+async function waitForProductTitle(page, timeoutMs = 30000) {
   try {
     await page.waitForSelector(SELECTORS.productTitle, { timeout: timeoutMs });
     return true;

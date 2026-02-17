@@ -6,5 +6,7 @@
   "buildTag": "latest",
   "input": "../input_schema.json",
   "dockerfile": "../Dockerfile",
-  "readme": "../README.md"
+  "readme": "../README.md",
+  "defaultMemoryMbytes": 4096,
+  "minMemoryMbytes": 2048
 }
