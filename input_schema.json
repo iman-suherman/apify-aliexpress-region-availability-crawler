@@ -1,23 +1,22 @@
 {
-  "title": "AliExpress Region Availability Crawler Input",
+  "title": "Input required to run",
   "type": "object",
   "schemaVersion": 1,
   "properties": {
     "productId": {
       "title": "Product ID",
       "type": "string",
-      "description": "AliExpress product ID. Copy from the item URL: .../item/1005005678912345.html → use 1005005678912345",
+      "description": "Required. AliExpress product ID from the item URL: .../item/XXXXXXXX.html → enter the number (e.g. 1005005678912345).",
       "editor": "textfield",
-      "prefill": "1005005678912345"
+      "placeholder": "Enter product ID"
     },
     "countries": {
-      "title": "Destination countries",
+      "title": "Destination countries (region list)",
       "type": "array",
-      "description": "Country codes to check shipping to (e.g. AU, DE, UK, US). Leave default to check AU, DE, UK, US.",
+      "description": "Required. Country codes to check shipping to, one per line (e.g. AU, DE, UK, US).",
       "editor": "stringList",
-      "default": ["AU", "DE", "UK", "US"],
       "placeholderValue": "AU"
     }
   },
-  "required": ["productId"]
+  "required": ["productId", "countries"]
 }

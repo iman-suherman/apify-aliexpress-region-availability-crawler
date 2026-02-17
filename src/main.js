@@ -7,12 +7,17 @@ async function main() {
 
   const input = await Actor.getInput();
   const productId = (input && input.productId) ? String(input.productId).trim() : null;
-  const countries = Array.isArray(input?.countries) && input.countries.length > 0
-    ? input.countries.map((c) => String(c).toUpperCase())
+  const rawCountries = input?.countries;
+  const countries = Array.isArray(rawCountries) && rawCountries.length > 0
+    ? rawCountries.map((c) => String(c).toUpperCase())
     : DEFAULT_COUNTRIES;
 
   if (!productId) {
-    await Actor.fail('Input must contain productId.');
+    await Actor.fail('Input required: provide Product ID (AliExpress item ID from the product URL).');
+    return;
+  }
+  if (!Array.isArray(rawCountries) || rawCountries.length === 0) {
+    await Actor.fail('Input required: provide Destination countries (region list), e.g. AU, DE, UK, US.');
     return;
   }
 
