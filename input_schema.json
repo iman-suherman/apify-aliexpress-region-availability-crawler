@@ -7,8 +7,7 @@
       "title": "Product ID",
       "type": "string",
       "description": "Required. AliExpress product ID from the item URL: .../item/XXXXXXXX.html → enter the number (e.g. 1005005678912345).",
-      "editor": "textfield",
-      "placeholder": "Enter product ID"
+      "editor": "textfield"
     },
     "countries": {
       "title": "Destination countries (region list)",
