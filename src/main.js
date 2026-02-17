@@ -21,12 +21,15 @@ async function main() {
     return;
   }
 
-  log.info(`Checking region availability for product ${productId} in: ${countries.join(', ')}`);
+  log.info(`Checking region availability for product ${productId} in: ${countries.join(', ')} (sequential)`);
 
-  // Parallel per-country checks (separate crawl session per country)
-  const regionResults = await Promise.all(
-    countries.map((countryCode) => checkCountryForProduct(productId, countryCode)),
-  );
+  // Sequential per-country checks so one browser at a time — avoids timeouts under memory limit
+  const regionResults = [];
+  for (const countryCode of countries) {
+    const result = await checkCountryForProduct(productId, countryCode);
+    regionResults.push(result);
+    log.info(`${countryCode}: ${result.error || (result.available === true ? 'available' : 'unavailable')}`);
+  }
 
   const regions = {};
   for (const r of regionResults) {
